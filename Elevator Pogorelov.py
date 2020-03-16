@@ -76,6 +76,16 @@ up_call = 0
 # индикатор типа пассажира. Соответственно: 0, 1, 2
 # passenger_type = ('general_worker', 'technician', 'visitor')
 
+
+#############################################################################################################################
+# дублируем стандартный вывод в файл:
+
+file = open('C:\\users\\pogorelovdm\\Elevator_out_1503.txt',"w")
+def print_both(file, *args):
+    toprint = ' '.join([str(arg) for arg in args])
+    print(toprint)
+    file.write(toprint)
+
 #############################################################################################################################
 # класс пассажир. У нас полный детерминизм -- каждый уже в начале дня знает, что будет делтаь целый день
 class Passenger:
@@ -431,10 +441,11 @@ def calculator(passenger, lift_list):
             #end if    
             # делаем то же самое со следующим пассажиром
         #end for
-        wait_time_arr.append(wait_time) # добавляем в массив ожиданий
+        wait_time_arr.append((wait_time, lift.ident)) # добавляем в массив ожиданий
         
     #end for # расчет функций ожидания завершен
     #print('wait_time_arr', wait_time_arr)
+    wait_time_arr.sort(key=wait_time)
     passenger.lift_selected = -1 # удаляем назначение лифта
     lift_no = wait_time_arr.index(min(wait_time_arr)) # возвращаем номер лифта с минимальным показателем
     lift_list[lift_no].add_passenger(passenger) # сажаем пассажира в выбранный лифт
@@ -459,7 +470,7 @@ def calculator(passenger, lift_list):
 #############################################################################################################################
 # вывод времени в строку (функция), возвращает текст HH.MM.SS
 def fmt_time(now_time):
-    string_time = str(int(now_time)) + ':' + str(int(divmod(now_time * 60, 60)[1]))+ ':' + str(int(divmod(now_time * 3660, 60)[1]))
+    string_time = str(int(now_time)).zfill(2) + ':' + str(int(divmod(now_time * 60, 60)[1])).zfill(2)+ ':' + str(int(divmod(now_time * 3660, 60)[1])).zfill(2)
     return string_time
     
 #############################################################################################################################
@@ -536,18 +547,12 @@ for i in range(ticks_in_a_day):
                 passenger.state = 'waiting_for_elevator'
                 passenger.lift_selected = lift_number
                 passenger.ride_start = now_time  # момент нажатия на кнопку
-                print('CALL', fmt_time(now_time), passenger.ident, passenger.current_floor, passenger.next_floor, passenger.lift_selected)                    
+                print_both(file,'CALL', fmt_time(now_time), passenger.ident, passenger.lift_selected, passenger.current_floor, passenger.next_floor)                    
             else: 
                 pass # ничего не делаем, надеемся что само рассосется на следующем тике    
             #end if
         #end if    
     
-    
-        
-        
-
-    
-
     #end for -- все кнопки нажали
 
     #---------------------------------------------------------------------------------------------------------------    
@@ -580,7 +585,7 @@ for i in range(ticks_in_a_day):
                    lift.current_floor == passenger.current_floor: # нужный лифт стоит на текущем этаже
                     lift.passenger_count += 1
                     passenger.enter_lift(lift)
-                    print('IN__', fmt_time(now_time), lift.passenger_count, passenger.ident, passenger.current_floor, passenger.next_floor, fmt_time((now_time - passenger.ride_start) * 60))
+                    print_both(file,'IN__', fmt_time(now_time), passenger.ident, lift.ident, passenger.current_floor, passenger.next_floor, lift.passenger_count, fmt_time((now_time - passenger.ride_start) * 60))
                     break
                 #end if
             #end for
@@ -592,7 +597,7 @@ for i in range(ticks_in_a_day):
                     lift.on_the_current_floor == -1 and passenger.lift_selected == lift.ident: # приехали на нужный этаж
                     lift.passenger_count -= 1
                     passenger.exit_lift(now_time)
-                    print('OUT_', fmt_time(now_time), passenger.ident, fmt_time(passenger.plan_wait_time * 60), fmt_time(passenger.fact_wait_time * 60))
+                    print_both(file,'OUT_', fmt_time(now_time), passenger.ident, lift.ident, passenger.current_floor, fmt_time(passenger.plan_wait_time * 60), fmt_time(passenger.fact_wait_time * 60))
                     break
                 #end if
             #end for
